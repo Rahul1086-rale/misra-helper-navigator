@@ -510,20 +510,25 @@ async def get_temp_fixed_file(project_id: str):
             raise HTTPException(status_code=404, detail="Project not found")
         
         session = sessions[project_id]
-        fixed_snippets = session.get('fixed_snippets', {})
-        numbered_file = session.get('numbered_file')
         
-        if not numbered_file:
-            raise HTTPException(status_code=404, detail="Numbered file not found")
+        # Get existing temp fixed file path if it exists
+        temp_fixed_numbered_path = session.get('temp_fixed_numbered')
         
-        # Create temporary fixed file if not exists or outdated
-        temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
-            numbered_file, fixed_snippets, project_id, UPLOAD_FOLDER
-        )
-        
-        # Store paths in session for cleanup
-        session['temp_fixed_numbered'] = temp_fixed_numbered_path
-        session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
+        if not temp_fixed_numbered_path or not os.path.exists(temp_fixed_numbered_path):
+            # If temp file doesn't exist, create it
+            fixed_snippets = session.get('fixed_snippets', {})
+            numbered_file = session.get('numbered_file')
+            
+            if not numbered_file:
+                raise HTTPException(status_code=404, detail="Numbered file not found")
+            
+            temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
+                numbered_file, fixed_snippets, project_id, UPLOAD_FOLDER
+            )
+            
+            # Store paths in session
+            session['temp_fixed_numbered'] = temp_fixed_numbered_path
+            session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
         
         # Return the fixed numbered content (with line numbers for diff view)
         content = get_file_content(temp_fixed_numbered_path)

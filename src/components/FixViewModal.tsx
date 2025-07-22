@@ -32,16 +32,18 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     
     setIsLoading(true);
     try {
-      // Load original numbered file
-      const originalText = await apiClient.getNumberedFile(state.projectId);
-      if (originalText) {
-        setOriginalCode(originalText);
+      // Load both original numbered file and temp fixed file for side-by-side view
+      const [originalResult, fixedResult] = await Promise.all([
+        apiClient.getNumberedFile(state.projectId),
+        apiClient.getTempFixedFile(state.projectId)
+      ]);
+
+      if (originalResult) {
+        setOriginalCode(originalResult);
       }
 
-      // Load fixed temporary file
-      const fixedText = await apiClient.getTempFixedFile(state.projectId);
-      if (fixedText) {
-        setFixedCode(fixedText);
+      if (fixedResult) {
+        setFixedCode(fixedResult);
       }
     } catch (error) {
       console.error('Failed to load code content:', error);
