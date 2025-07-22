@@ -20,12 +20,12 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   const [fixedCode, setFixedCode] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load code content when modal opens
+  // Load code content when modal opens and when violations change
   useEffect(() => {
     if (isOpen && state.projectId) {
       loadCodeContent();
     }
-  }, [isOpen, state.projectId]);
+  }, [isOpen, state.projectId, state.selectedViolations]);
 
   const loadCodeContent = async () => {
     if (!state.projectId) return;
@@ -33,16 +33,14 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     setIsLoading(true);
     try {
       // Load original numbered file
-      const originalResponse = await fetch(`/api/files/numbered/${state.projectId}`);
-      if (originalResponse.ok) {
-        const originalText = await originalResponse.text();
+      const originalText = await apiClient.getNumberedFile(state.projectId);
+      if (originalText) {
         setOriginalCode(originalText);
       }
 
       // Load fixed temporary file
-      const fixedResponse = await fetch(`/api/files/temp-fixed/${state.projectId}`);
-      if (fixedResponse.ok) {
-        const fixedText = await fixedResponse.text();
+      const fixedText = await apiClient.getTempFixedFile(state.projectId);
+      if (fixedText) {
         setFixedCode(fixedText);
       }
     } catch (error) {

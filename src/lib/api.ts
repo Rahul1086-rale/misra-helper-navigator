@@ -176,6 +176,13 @@ class ApiClient {
       return null;
     }
   }
+
+  // New diff endpoint
+  async getDiff(projectId: string): Promise<ApiResponse<{original: string, fixed: string, has_changes: boolean}>> {
+    return this.request(`/diff/${projectId}`, {
+      method: 'GET',
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -17,6 +17,7 @@ from numbering import add_line_numbers
 from denumbering import remove_line_numbers
 from replace import merge_fixed_snippets_into_file
 from fixed_response_code_snippet import extract_snippets_from_response, save_snippets_to_json
+from diff_utils import create_temp_fixed_denumbered_file, get_file_content, create_diff_data, cleanup_temp_files
 
 app = FastAPI(
     title="MISRA Fix Copilot API",
@@ -107,6 +108,11 @@ class ChatResponse(BaseModel):
 class SettingsResponse(BaseModel):
     success: bool
     message: str
+
+class DiffResponse(BaseModel):
+    original: str
+    fixed: str
+    has_changes: bool
 
 # Initialize Vertex AI on startup
 @app.on_event("startup")
@@ -328,6 +334,20 @@ async def gemini_fix_violations(request: FixViolationsRequest):
             save_snippets_to_json(code_snippets, snippet_file)
             sessions[project_id]['snippet_file'] = snippet_file
             print(f"Snippets saved to: {snippet_file}")  # Debug
+            
+            # Create temporary fixed files for immediate diff view
+            try:
+                session = sessions[project_id]
+                numbered_file = session.get('numbered_file')
+                if numbered_file:
+                    temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
+                        numbered_file, code_snippets, project_id, UPLOAD_FOLDER
+                    )
+                    session['temp_fixed_numbered'] = temp_fixed_numbered_path
+                    session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
+                    print(f"Created temporary fixed files for project {project_id}")
+            except Exception as e:
+                print(f"Error creating temporary fixed files: {str(e)}")
         
         return FixViolationsResponse(
             response=response,
@@ -427,6 +447,20 @@ async def chat(request: ChatRequest):
             save_snippets_to_json(code_snippets, snippet_file)
             sessions[project_id]['snippet_file'] = snippet_file
             print(f"Chat snippets saved to: {snippet_file}")  # Debug
+            
+            # Update temporary fixed file for real-time diff view
+            try:
+                session = sessions[project_id]
+                numbered_file = session.get('numbered_file')
+                if numbered_file:
+                    temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
+                        numbered_file, code_snippets, project_id, UPLOAD_FOLDER
+                    )
+                    session['temp_fixed_numbered'] = temp_fixed_numbered_path
+                    session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
+                    print(f"Updated temporary fixed files for project {project_id}")
+            except Exception as e:
+                print(f"Error updating temporary fixed files: {str(e)}")
         
         return ChatResponse(response=response.text)
         
@@ -444,6 +478,94 @@ async def get_session_state():
 async def save_session_state():
     # For now, just return success
     return {"success": True}
+
+# New diff endpoints for Fix View Modal
+@app.get("/api/files/numbered/{project_id}")
+async def get_numbered_file(project_id: str):
+    """Get numbered file content"""
+    try:
+        if project_id not in sessions:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        session = sessions[project_id]
+        numbered_file = session.get('numbered_file')
+        
+        if not numbered_file or not os.path.exists(numbered_file):
+            raise HTTPException(status_code=404, detail="Numbered file not found")
+        
+        content = get_file_content(numbered_file)
+        if content is None:
+            raise HTTPException(status_code=500, detail="Failed to read numbered file")
+        
+        return content
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/files/temp-fixed/{project_id}")
+async def get_temp_fixed_file(project_id: str):
+    """Get temporary fixed file content"""
+    try:
+        if project_id not in sessions:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        session = sessions[project_id]
+        fixed_snippets = session.get('fixed_snippets', {})
+        numbered_file = session.get('numbered_file')
+        
+        if not numbered_file:
+            raise HTTPException(status_code=404, detail="Numbered file not found")
+        
+        # Create temporary fixed file if not exists or outdated
+        temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
+            numbered_file, fixed_snippets, project_id, UPLOAD_FOLDER
+        )
+        
+        # Store paths in session for cleanup
+        session['temp_fixed_numbered'] = temp_fixed_numbered_path
+        session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
+        
+        # Return the fixed numbered content (with line numbers for diff view)
+        content = get_file_content(temp_fixed_numbered_path)
+        if content is None:
+            raise HTTPException(status_code=500, detail="Failed to read temporary fixed file")
+        
+        return content
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/diff/{project_id}", response_model=DiffResponse)
+async def get_diff(project_id: str):
+    """Get diff between original and fixed files"""
+    try:
+        if project_id not in sessions:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        session = sessions[project_id]
+        original_file = session.get('cpp_file')  # Original file
+        fixed_snippets = session.get('fixed_snippets', {})
+        numbered_file = session.get('numbered_file')
+        
+        if not original_file or not numbered_file:
+            raise HTTPException(status_code=404, detail="Required files not found")
+        
+        # Create temporary fixed denumbered file for comparison with original
+        temp_fixed_numbered_path, temp_fixed_denumbered_path = create_temp_fixed_denumbered_file(
+            numbered_file, fixed_snippets, project_id, UPLOAD_FOLDER
+        )
+        
+        # Create diff data comparing original with fixed denumbered file
+        diff_data = create_diff_data(original_file, temp_fixed_denumbered_path)
+        
+        # Store temp paths in session for potential cleanup
+        session['temp_fixed_numbered'] = temp_fixed_numbered_path
+        session['temp_fixed_denumbered'] = temp_fixed_denumbered_path
+        
+        return DiffResponse(**diff_data)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Health check endpoint
 @app.get("/health")
