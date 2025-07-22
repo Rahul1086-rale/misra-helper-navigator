@@ -150,7 +150,7 @@ export default function ChatInterface() {
         {state.messages.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
             <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Welcome to MISRA Fix Copilot!</p>
+            <p>Welcome to RT MISRA Copilot!</p>
             <p className="text-sm">Upload your files and start the workflow to begin.</p>
           </div>
         )}

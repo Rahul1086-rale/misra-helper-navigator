@@ -103,29 +103,27 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     }
   };
 
+  const isSyncingScroll = useRef(false);
+
   // Synchronized scrolling with prevention of infinite loops
   const handleScroll = (e: React.UIEvent<HTMLDivElement>, isOriginal: boolean) => {
-    const element = e.currentTarget;
-    const scrollTop = element.scrollTop;
-    const scrollLeft = element.scrollLeft;
-    
-    // Prevent infinite loop by checking if scroll position is different
-    const otherRef = isOriginal ? fixedScrollRef.current : originalScrollRef.current;
-    
-    if (otherRef && (otherRef.scrollTop !== scrollTop || otherRef.scrollLeft !== scrollLeft)) {
-      // Temporarily remove scroll listener to prevent infinite loop
-      otherRef.onscroll = null;
-      otherRef.scrollTop = scrollTop;
-      otherRef.scrollLeft = scrollLeft;
-      
-      // Re-add scroll listener after a brief delay
-      setTimeout(() => {
-        if (otherRef) {
-          otherRef.onscroll = (e) => handleScroll(e as any, !isOriginal);
-        }
-      }, 10);
-    }
+    if (isSyncingScroll.current) return;
+
+    const current = e.currentTarget;
+    const other = isOriginal ? fixedScrollRef.current : originalScrollRef.current;
+
+    if (!other) return;
+
+    isSyncingScroll.current = true;
+    other.scrollTop = current.scrollTop;
+    other.scrollLeft = current.scrollLeft;
+
+    // Slight delay to prevent flickering sync
+    setTimeout(() => {
+      isSyncingScroll.current = false;
+    }, 10);
   };
+
 
   // Highlight differences between original and fixed code
   const highlightDifferences = (code: string, isOriginal: boolean) => {
@@ -144,6 +142,9 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
       const isModified = isDifferent && originalLine && fixedLine;
       const isAdded = !originalLine && fixedLine;
       const isRemoved = originalLine && !fixedLine;
+
+      console.log(`[${index}] original:`, JSON.stringify(originalLine));
+      console.log(`[${index}] fixed:   `, JSON.stringify(fixedLine));
       
       let className = '';
       if (isModified) {
@@ -169,11 +170,10 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
         <span className="font-medium text-sm">{title}</span>
       </div>
       <div 
-        ref={isOriginal ? originalScrollRef : fixedScrollRef}
-        className="flex-1 overflow-auto"
-        onScroll={(e) => handleScroll(e, !!isOriginal)}
-        style={{ scrollBehavior: 'auto' }}
-      >
+  ref={isOriginal ? originalScrollRef : fixedScrollRef}
+  className="overflow-auto h-[500px]"
+  onScroll={(e) => handleScroll(e, !!isOriginal)}
+>
         <pre className="p-4 text-xs font-mono whitespace-pre-wrap break-words leading-5">
           <code className="block">
             {code ? (
@@ -213,7 +213,7 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
             </TabsList>
 
             <TabsContent value="diff" className="mt-4">
-              <div className="grid grid-cols-2 gap-0 h-[500px] border rounded-lg overflow-hidden">
+              <div className="grid grid-cols-2 gap-0 h-[500px] border rounded-lg">
                 {renderCodeBlock(originalCode, "Original (Numbered)", true)}
                 <div className="border-l">
                   {renderCodeBlock(fixedCode, "Fixed (With Violations Resolved)", false)}
