@@ -33,18 +33,14 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     
     setIsLoading(true);
     try {
-      // Load both original numbered file and temp fixed file for side-by-side view
-      const [originalResult, fixedResult] = await Promise.all([
-        apiClient.getNumberedFile(state.projectId),
-        apiClient.getTempFixedFile(state.projectId)
-      ]);
+      // Use the diff API to get proper comparison
+      const diffResult = await apiClient.getDiff(state.projectId);
 
-      if (originalResult) {
-        setOriginalCode(originalResult);
-      }
-
-      if (fixedResult) {
-        setFixedCode(fixedResult);
+      if (diffResult.success && diffResult.data) {
+        setOriginalCode(diffResult.data.original);
+        setFixedCode(diffResult.data.fixed);
+      } else {
+        throw new Error(diffResult.error || 'Failed to get diff data');
       }
     } catch (error) {
       console.error('Failed to load code content:', error);
