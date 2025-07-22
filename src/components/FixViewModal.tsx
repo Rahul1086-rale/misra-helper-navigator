@@ -103,17 +103,27 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     }
   };
 
-  // Synchronized scrolling
+  // Synchronized scrolling with prevention of infinite loops
   const handleScroll = (e: React.UIEvent<HTMLDivElement>, isOriginal: boolean) => {
-    const scrollTop = e.currentTarget.scrollTop;
-    const scrollLeft = e.currentTarget.scrollLeft;
+    const element = e.currentTarget;
+    const scrollTop = element.scrollTop;
+    const scrollLeft = element.scrollLeft;
     
-    if (isOriginal && fixedScrollRef.current) {
-      fixedScrollRef.current.scrollTop = scrollTop;
-      fixedScrollRef.current.scrollLeft = scrollLeft;
-    } else if (!isOriginal && originalScrollRef.current) {
-      originalScrollRef.current.scrollTop = scrollTop;
-      originalScrollRef.current.scrollLeft = scrollLeft;
+    // Prevent infinite loop by checking if scroll position is different
+    const otherRef = isOriginal ? fixedScrollRef.current : originalScrollRef.current;
+    
+    if (otherRef && (otherRef.scrollTop !== scrollTop || otherRef.scrollLeft !== scrollLeft)) {
+      // Temporarily remove scroll listener to prevent infinite loop
+      otherRef.onscroll = null;
+      otherRef.scrollTop = scrollTop;
+      otherRef.scrollLeft = scrollLeft;
+      
+      // Re-add scroll listener after a brief delay
+      setTimeout(() => {
+        if (otherRef) {
+          otherRef.onscroll = (e) => handleScroll(e as any, !isOriginal);
+        }
+      }, 10);
     }
   };
 
@@ -162,12 +172,15 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
         ref={isOriginal ? originalScrollRef : fixedScrollRef}
         className="flex-1 overflow-auto"
         onScroll={(e) => handleScroll(e, !!isOriginal)}
+        style={{ scrollBehavior: 'auto' }}
       >
-        <pre className="p-4 text-xs font-mono whitespace-pre-wrap break-words">
-          <code>
+        <pre className="p-4 text-xs font-mono whitespace-pre-wrap break-words leading-5">
+          <code className="block">
             {code ? (
               isOriginal !== undefined ? (
-                highlightDifferences(code, isOriginal)
+                <div className="space-y-0">
+                  {highlightDifferences(code, isOriginal)}
+                </div>
               ) : (
                 code
               )
