@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Download, RefreshCw, Eye, Code2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -20,6 +20,8 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   const [originalCode, setOriginalCode] = useState<string>('');
   const [fixedCode, setFixedCode] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const originalScrollRef = useRef<HTMLDivElement>(null);
+  const fixedScrollRef = useRef<HTMLDivElement>(null);
 
   // Load code content when modal opens and when violations change
   useEffect(() => {
@@ -101,17 +103,80 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     }
   };
 
-  const renderCodeBlock = (code: string, title: string) => (
+  // Synchronized scrolling
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>, isOriginal: boolean) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    const scrollLeft = e.currentTarget.scrollLeft;
+    
+    if (isOriginal && fixedScrollRef.current) {
+      fixedScrollRef.current.scrollTop = scrollTop;
+      fixedScrollRef.current.scrollLeft = scrollLeft;
+    } else if (!isOriginal && originalScrollRef.current) {
+      originalScrollRef.current.scrollTop = scrollTop;
+      originalScrollRef.current.scrollLeft = scrollLeft;
+    }
+  };
+
+  // Highlight differences between original and fixed code
+  const highlightDifferences = (code: string, isOriginal: boolean) => {
+    if (!originalCode || !fixedCode) return code;
+    
+    const originalLines = originalCode.split('\n');
+    const fixedLines = fixedCode.split('\n');
+    const codeLines = code.split('\n');
+    
+    return codeLines.map((line, index) => {
+      const originalLine = originalLines[index] || '';
+      const fixedLine = fixedLines[index] || '';
+      
+      // Check if line is different
+      const isDifferent = originalLine !== fixedLine;
+      const isModified = isDifferent && originalLine && fixedLine;
+      const isAdded = !originalLine && fixedLine;
+      const isRemoved = originalLine && !fixedLine;
+      
+      let className = '';
+      if (isModified) {
+        className = isOriginal ? 'bg-red-50 border-l-2 border-l-red-400' : 'bg-green-50 border-l-2 border-l-green-400';
+      } else if (isAdded && !isOriginal) {
+        className = 'bg-green-50 border-l-2 border-l-green-400';
+      } else if (isRemoved && isOriginal) {
+        className = 'bg-red-50 border-l-2 border-l-red-400';
+      }
+      
+      return (
+        <div key={index} className={`${className} px-2 py-0.5`}>
+          {line}
+        </div>
+      );
+    });
+  };
+
+  const renderCodeBlock = (code: string, title: string, isOriginal?: boolean) => (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 p-3 border-b bg-muted">
         <Code2 className="w-4 h-4" />
         <span className="font-medium text-sm">{title}</span>
       </div>
-      <ScrollArea className="flex-1">
+      <div 
+        ref={isOriginal ? originalScrollRef : fixedScrollRef}
+        className="flex-1 overflow-auto"
+        onScroll={(e) => handleScroll(e, !!isOriginal)}
+      >
         <pre className="p-4 text-xs font-mono whitespace-pre-wrap break-words">
-          <code>{code || 'Loading...'}</code>
+          <code>
+            {code ? (
+              isOriginal !== undefined ? (
+                highlightDifferences(code, isOriginal)
+              ) : (
+                code
+              )
+            ) : (
+              'Loading...'
+            )}
+          </code>
         </pre>
-      </ScrollArea>
+      </div>
     </div>
   );
 
@@ -135,10 +200,20 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
             </TabsList>
 
             <TabsContent value="diff" className="mt-4">
-              <div className="grid grid-cols-2 gap-4 h-[500px] border rounded-lg overflow-hidden">
-                {renderCodeBlock(originalCode, "Original (Numbered)")}
+              <div className="grid grid-cols-2 gap-0 h-[500px] border rounded-lg overflow-hidden">
+                {renderCodeBlock(originalCode, "Original (Numbered)", true)}
                 <div className="border-l">
-                  {renderCodeBlock(fixedCode, "Fixed (With Violations Resolved)")}
+                  {renderCodeBlock(fixedCode, "Fixed (With Violations Resolved)", false)}
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400"></div>
+                  <span>Removed/Modified lines</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400"></div>
+                  <span>Added/Fixed lines</span>
                 </div>
               </div>
             </TabsContent>
