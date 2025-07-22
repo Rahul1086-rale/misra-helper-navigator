@@ -145,6 +145,37 @@ class ApiClient {
       return null;
     }
   }
+
+  // File content endpoints for Fix View Modal
+  async getNumberedFile(projectId: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/files/numbered/${projectId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error('Failed to get numbered file:', error);
+      return null;
+    }
+  }
+
+  async getTempFixedFile(projectId: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/files/temp-fixed/${projectId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error('Failed to get temp fixed file:', error);
+      return null;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

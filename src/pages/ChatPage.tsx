@@ -1,31 +1,25 @@
 import React from 'react';
 import { AppProvider } from '@/context/AppContext';
-import ChatInterface from '@/components/ChatInterface';
-import FileUploadSection from '@/components/FileUploadSection';
-import WorkflowControls from '@/components/WorkflowControls';
-import CodeSnippetsPanel from '@/components/CodeSnippetsPanel';
+import NewWorkflowPanel from '@/components/NewWorkflowPanel';
 
 export default function ChatPage() {
   return (
     <AppProvider>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-4">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-2rem)]">
-            {/* Left Sidebar */}
-            <div className="lg:col-span-1 space-y-4 overflow-y-auto">
-              <FileUploadSection />
-              <WorkflowControls />
+        <div className="container mx-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                MISRA Fix Copilot
+              </h1>
+              <p className="text-muted-foreground">
+                Upload your C++ files and MISRA reports to automatically fix violations
+              </p>
             </div>
-            
-            {/* Main Chat Area */}
-            <div className="lg:col-span-2">
-              <ChatInterface />
-            </div>
-            
-            {/* Right Sidebar */}
-            <div className="lg:col-span-1 space-y-4 overflow-y-auto">
-              <CodeSnippetsPanel />
-            </div>
+
+            {/* Main Workflow Panel */}
+            <NewWorkflowPanel />
           </div>
         </div>
       </div>
