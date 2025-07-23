@@ -23,7 +23,6 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
     new Set(state.selectedViolations.map(v => v.line.toString()))
   );
   const [isFixing, setIsFixing] = useState(false);
-  const [fixProgress, setFixProgress] = useState(0);
 
   const toggleViolation = (line: number) => {
     const lineStr = line.toString();
@@ -69,21 +68,9 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
     if (!state.projectId) return;
     
     setIsFixing(true);
-    setFixProgress(10);
     
     try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setFixProgress(prev => {
-          if (prev < 90) return prev + 10;
-          return prev;
-        });
-      }, 500);
-
       const response = await apiClient.fixViolations(state.projectId, state.selectedViolations);
-      
-      clearInterval(progressInterval);
-      setFixProgress(100);
       
       if (response.success && response.data) {
         const message = { 
@@ -102,7 +89,6 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
 
         setTimeout(() => {
           setIsFixing(false);
-          setFixProgress(0);
           onFixComplete();
           onClose();
         }, 1000);
@@ -111,7 +97,6 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
       }
     } catch (error) {
       setIsFixing(false);
-      setFixProgress(0);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to fix violations',
@@ -181,9 +166,9 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
                 <p className="text-sm text-muted-foreground">
                   Processing {state.selectedViolations.length} violations...
                 </p>
-                <Progress value={fixProgress} className="w-full" />
+                <Progress indeterminate className="w-full" />
                 <p className="text-xs text-muted-foreground">
-                  {fixProgress}% complete
+                  Processing...
                 </p>
               </div>
             </div>
