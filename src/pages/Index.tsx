@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Shield, Zap, Code, Users, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
+import rtMisraLogo from "@/assets/rt-misra-logo.png";
 
 export default function Index() {
   return (
@@ -10,9 +11,12 @@ export default function Index() {
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              RT MISRA Copilot
-            </h1>
+            <div className="flex items-center gap-3">
+              <img src={rtMisraLogo} alt="RT MISRA Copilot" className="h-8" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                RT MISRA Copilot
+              </h1>
+            </div>
             {/* <Link to="/chat">
               <Button>
                 <MessageSquare className="w-4 h-4 mr-2" />

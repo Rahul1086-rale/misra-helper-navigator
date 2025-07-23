@@ -229,13 +229,13 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
                   {renderCodeBlock(fixedCode, "Fixed (With Violations Resolved)", false)}
                 </div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground flex items-center gap-4">
+              <div className="mt-2 text-xs text-muted-foreground flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400"></div>
+                  <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500"></div>
                   <span>Removed/Modified lines</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400"></div>
+                  <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500"></div>
                   <span>Added/Fixed lines</span>
                 </div>
               </div>
@@ -255,13 +255,14 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex justify-end items-center pt-4 border-t gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center pt-4 border-t gap-3">
+            <Button variant="outline" onClick={onClose} className="order-2 sm:order-1">
               Close
             </Button>
             <Button 
               onClick={downloadFinalFile}
               disabled={isLoading}
+              className="order-1 sm:order-2"
             >
               <Download className="w-4 h-4 mr-2" />
               {isLoading ? 'Processing...' : 'Download Final File'}
