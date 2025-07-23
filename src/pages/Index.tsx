@@ -8,24 +8,10 @@ import rtMisraLogo from "@/assets/rt-misra-logo.png";
 export default function Index() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={rtMisraLogo} alt="RT MISRA Copilot" className="h-8" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                RT MISRA Copilot
-              </h1>
-            </div>
-            {/* <Link to="/chat">
-              <Button>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Open Chat
-              </Button>
-            </Link> */}
-          </div>
+      
+      <div className="absolute top-6 left-6 z-50">
+          <img src={rtMisraLogo} alt="RT MISRA Copilot" className="h-12" />
         </div>
-      </nav>
       
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
@@ -35,7 +21,7 @@ export default function Index() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-8 py-2">
             RT MISRA Copilot
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">

@@ -294,7 +294,7 @@ export default function NewWorkflowPanel() {
             <div className="text-center">
               <Button
                 onClick={() => setShowViolationsModal(true)}
-                variant="default"
+                variant="outline"
                 className="w-full"
               >
                 <Eye className="w-4 h-4 mr-2" />

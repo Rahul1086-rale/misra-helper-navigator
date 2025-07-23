@@ -34,19 +34,29 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
       newSelected.add(lineStr);
     }
     setTempSelectedViolations(newSelected);
+    
+    // Update state.selectedViolations in real-time
+    const selectedViolations = state.violations.filter(v => newSelected.has(v.line.toString()));
+    dispatch({ type: 'SET_SELECTED_VIOLATIONS', payload: selectedViolations });
   };
 
   const selectAll = () => {
     const allLines = new Set(state.violations.map(v => v.line.toString()));
     setTempSelectedViolations(allLines);
+    
+    // Update state.selectedViolations in real-time
+    dispatch({ type: 'SET_SELECTED_VIOLATIONS', payload: state.violations });
   };
 
   const selectNone = () => {
     setTempSelectedViolations(new Set());
+    
+    // Update state.selectedViolations in real-time
+    dispatch({ type: 'SET_SELECTED_VIOLATIONS', payload: [] });
   };
 
   const confirmAndFix = async () => {
-    if (tempSelectedViolations.size === 0) return;
+    if (state.selectedViolations.length === 0) return;
 
     // Update violations with selection status
     const updatedViolations = state.violations.map(v => ({
@@ -55,10 +65,6 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
     }));
     
     dispatch({ type: 'SET_VIOLATIONS', payload: updatedViolations });
-    
-    // Update selected violations
-    const selectedViolations = updatedViolations.filter(v => v.selected);
-    dispatch({ type: 'SET_SELECTED_VIOLATIONS', payload: selectedViolations });
 
     if (!state.projectId) return;
     
@@ -74,7 +80,7 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
         });
       }, 500);
 
-      const response = await apiClient.fixViolations(state.projectId, selectedViolations);
+      const response = await apiClient.fixViolations(state.projectId, state.selectedViolations);
       
       clearInterval(progressInterval);
       setFixProgress(100);
@@ -173,7 +179,7 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
                 <Wrench className="w-8 h-8 mx-auto animate-pulse text-primary" />
                 <h3 className="text-lg font-semibold">Fixing Violations</h3>
                 <p className="text-sm text-muted-foreground">
-                  Processing {tempSelectedViolations.size} violations...
+                  Processing {state.selectedViolations.length} violations...
                 </p>
                 <Progress value={fixProgress} className="w-full" />
                 <p className="text-xs text-muted-foreground">
@@ -188,7 +194,7 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
           <div className="flex items-center justify-between">
             <DialogTitle>View and Select Violations ({state.violations.length})</DialogTitle>
             <Badge variant="outline">
-              {tempSelectedViolations.size} selected
+              {state.selectedViolations.length} selected
             </Badge>
           </div>
           <div className="flex gap-2">
@@ -205,7 +211,7 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
               variant="outline"
               size="sm"
               onClick={selectNone}
-              disabled={tempSelectedViolations.size === 0 || isFixing}
+              disabled={state.selectedViolations.length === 0 || isFixing}
             >
               <Square className="w-3 h-3 mr-1" />
               Select None
@@ -283,7 +289,7 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
             disabled={tempSelectedViolations.size === 0 || isFixing}
           >
             <Wrench className="w-4 h-4 mr-2" />
-            {isFixing ? 'Fixing...' : `Confirm and Fix (${tempSelectedViolations.size})`}
+            {isFixing ? 'Fixing...' : `Confirm and Fix (${state.selectedViolations.length})`}
           </Button>
         </div>
       </DialogContent>
