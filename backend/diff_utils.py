@@ -82,18 +82,21 @@ def create_diff_data(original_file_path: str, fixed_file_path: str, fixed_snippe
     original_content = get_file_content(original_file_path)
     fixed_content = get_file_content(fixed_file_path)
     
-    # Extract line numbers to highlight if fixed_snippets provided
+    # Extract precise line mappings and changes if fixed_snippets provided
     highlight_data = {}
     if fixed_snippets:
         try:
-            original_lines, fixed_lines = get_original_and_fixed_lines(fixed_snippets)
+            mappings_data = get_line_mappings_and_changes(fixed_snippets, original_content, fixed_content)
             highlight_data = {
-                "original_lines": original_lines,
-                "fixed_lines": fixed_lines
+                "line_mappings": mappings_data['line_mappings'],
+                "changed_lines": [item['original'] for item in mappings_data['changed_lines']],
+                "changed_lines_fixed": [item['fixed'] for item in mappings_data['changed_lines']],
+                "added_lines": mappings_data['added_lines'],
+                "removed_lines": mappings_data['removed_lines']
             }
         except Exception as e:
             print(f"Error extracting highlight lines: {str(e)}")
-            highlight_data = {"original_lines": [], "fixed_lines": []}
+            highlight_data = {"line_mappings": {}, "changed_lines": [], "changed_lines_fixed": [], "added_lines": [], "removed_lines": []}
     
     return {
         "original": original_content or "",
@@ -102,37 +105,62 @@ def create_diff_data(original_file_path: str, fixed_file_path: str, fixed_snippe
         "highlight": highlight_data
     }
 
-def get_original_and_fixed_lines(json_data):
+def get_line_mappings_and_changes(json_data, original_content, fixed_content):
     """
-    Extract original and fixed line numbers from JSON data.
+    Create precise line mappings and detect actual changes between original and fixed content.
     
     Args:
         json_data: Dictionary mapping line keys to content
+        original_content: Original file content as string
+        fixed_content: Fixed file content as string
         
     Returns:
-        Tuple of (original_lines, fixed_lines) - lists of line numbers to highlight
+        Dictionary with line mappings and change information
     """
-    original_lines = []
-    fixed_line_map = {}
+    original_lines = original_content.split('\n') if original_content else []
+    fixed_lines = fixed_content.split('\n') if fixed_content else []
+    
+    line_mappings = {}  # original_line_num: fixed_line_num
+    changed_lines = []  # lines that were modified
+    added_lines = []    # lines that were newly added
+    removed_lines = []  # lines that were removed
+    
     inserted_count = 0
-
     sorted_keys = sorted(json_data.keys(), key=lambda k: (int(re.match(r'\d+', k).group()), k))
 
     for key in sorted_keys:
         base_line = int(re.match(r'\d+', key).group())
-
-        if key.isdigit():
-            original_lines.append(base_line)
-
+        
         if re.search(r'[a-z]$', key):
+            # This is a newly inserted line
             inserted_count += 1
-            fixed_line_map[key] = base_line + inserted_count
+            fixed_line_num = base_line + inserted_count
+            added_lines.append(fixed_line_num)
         else:
-            fixed_line_map[key] = base_line + inserted_count
-
-    # Return only the mapped line numbers
-    fixed_lines = sorted(set(fixed_line_map.values()))
-    return sorted(set(original_lines)), fixed_lines
+            # This is a modified or replaced line
+            fixed_line_num = base_line + inserted_count
+            line_mappings[base_line] = fixed_line_num
+            
+            # Compare actual content to detect changes
+            if (base_line <= len(original_lines) and 
+                fixed_line_num <= len(fixed_lines)):
+                original_line_content = original_lines[base_line - 1].strip()
+                fixed_line_content = fixed_lines[fixed_line_num - 1].strip()
+                
+                if original_line_content != fixed_line_content:
+                    changed_lines.append({
+                        'original': base_line,
+                        'fixed': fixed_line_num,
+                        'original_content': original_line_content,
+                        'fixed_content': fixed_line_content
+                    })
+    
+    return {
+        'line_mappings': line_mappings,
+        'changed_lines': changed_lines,
+        'added_lines': added_lines,
+        'removed_lines': removed_lines
+    }
 
 def cleanup_temp_files(*file_paths: str) -> None:
     """

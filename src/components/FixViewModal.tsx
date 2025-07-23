@@ -19,7 +19,13 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   const { toast } = useToast();
   const [originalCode, setOriginalCode] = useState<string>('');
   const [fixedCode, setFixedCode] = useState<string>('');
-  const [highlightData, setHighlightData] = useState<{original_lines: number[], fixed_lines: number[]} | null>(null);
+  const [highlightData, setHighlightData] = useState<{
+    line_mappings: Record<number, number>;
+    changed_lines: number[];
+    changed_lines_fixed: number[];
+    added_lines: number[];
+    removed_lines: number[];
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const originalScrollRef = useRef<HTMLDivElement>(null);
   const fixedScrollRef = useRef<HTMLDivElement>(null);
@@ -127,29 +133,38 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   };
 
 
-  // Highlight differences between original and fixed code using backend line data
+  // Highlight differences using precise line mappings and content comparison
   const highlightDifferences = (code: string, isOriginal: boolean) => {
-    if (!originalCode || !fixedCode) return code;
+    if (!originalCode || !fixedCode || !highlightData) return code;
     
     const codeLines = code.split('\n');
-    const modifiedLines = new Set<number>();
+    const changedLines = new Set<number>();
+    const addedLines = new Set<number>();
     
-    // Use backend-provided line numbers for precise highlighting
-    if (highlightData) {
-      const linesToHighlight = isOriginal ? highlightData.original_lines : highlightData.fixed_lines;
-      linesToHighlight.forEach(lineNum => {
-        modifiedLines.add(lineNum - 1); // Convert to 0-based index
+    if (isOriginal) {
+      // Highlight changed lines in original (red)
+      highlightData.changed_lines?.forEach(lineNum => {
+        changedLines.add(lineNum - 1); // Convert to 0-based index
+      });
+    } else {
+      // Highlight changed lines in fixed (yellow) and added lines (green)
+      highlightData.changed_lines_fixed?.forEach(lineNum => {
+        changedLines.add(lineNum - 1);
+      });
+      highlightData.added_lines?.forEach(lineNum => {
+        addedLines.add(lineNum - 1);
       });
     }
     
     return codeLines.map((line, index) => {
-      const isModified = modifiedLines.has(index);
-      
       let className = '';
-      if (isModified) {
+      
+      if (addedLines.has(index)) {
+        className = 'bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500';
+      } else if (changedLines.has(index)) {
         className = isOriginal 
-          ? 'bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500' 
-          : 'bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500';
+          ? 'bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500'
+          : 'bg-yellow-50 border-l-2 border-l-yellow-400 dark:bg-yellow-950/20 dark:border-l-yellow-500';
       }
       
       return (
@@ -219,11 +234,15 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
               <div className="mt-2 text-xs text-muted-foreground flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500"></div>
-                  <span>Removed/Modified lines</span>
+                  <span>Original lines</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-50 border-l-2 border-l-yellow-400 dark:bg-yellow-950/20 dark:border-l-yellow-500"></div>
+                  <span>Modified lines</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500"></div>
-                  <span>Added/Fixed lines</span>
+                  <span>Added lines</span>
                 </div>
               </div>
             </TabsContent>
