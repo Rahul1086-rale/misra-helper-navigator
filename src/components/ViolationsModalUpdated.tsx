@@ -175,9 +175,17 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
                 <p className="text-sm text-muted-foreground">
                   Processing {tempSelectedViolations.size} violations...
                 </p>
-                <Progress value={fixProgress} className="w-full" />
+                <div className="relative w-full h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      width: `${Math.min(fixProgress, 100)}%`,
+                      animation: fixProgress < 90 ? 'pulse 1.5s ease-in-out infinite' : 'none'
+                    }}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {fixProgress}% complete
+                  Analyzing and fixing violations...
                 </p>
               </div>
             </div>
@@ -278,9 +286,10 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
           <Button variant="outline" onClick={onClose} disabled={isFixing}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={confirmAndFix}
             disabled={tempSelectedViolations.size === 0 || isFixing}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Wrench className="w-4 h-4 mr-2" />
             {isFixing ? 'Fixing...' : `Confirm and Fix (${tempSelectedViolations.size})`}

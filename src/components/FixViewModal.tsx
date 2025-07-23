@@ -62,35 +62,28 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
     try {
       setIsLoading(true);
       
-      // First apply fixes and denumber
-      const mergeResponse = await apiClient.applyFixes(state.projectId);
+      // Download the final file directly (backend handles apply fixes internally)
+      const blob = await apiClient.downloadFixedFile(state.projectId);
       
-      if (mergeResponse.success) {
-        // Then download the final file
-        const blob = await apiClient.downloadFixedFile(state.projectId);
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `fixed_${state.uploadedFile?.name || 'file.cpp'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
         
-        if (blob) {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = `fixed_${state.uploadedFile?.name || 'file.cpp'}`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          
-          dispatch({ type: 'SET_CURRENT_STEP', payload: 'finalize' });
-          toast({ 
-            title: "Success", 
-            description: "Fixed file downloaded successfully" 
-          });
-          onClose();
-        } else {
-          throw new Error('Failed to download file');
-        }
+        dispatch({ type: 'SET_CURRENT_STEP', payload: 'finalize' });
+        toast({ 
+          title: "Success", 
+          description: "Fixed file downloaded successfully" 
+        });
+        onClose();
       } else {
-        throw new Error(mergeResponse.error || 'Failed to apply fixes');
+        throw new Error('Failed to download file');
       }
     } catch (error) {
       toast({
@@ -229,13 +222,13 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
                   {renderCodeBlock(fixedCode, "Fixed (With Violations Resolved)", false)}
                 </div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground flex items-center gap-4">
+              <div className="mt-2 text-xs text-muted-foreground flex flex-wrap items-center gap-4 justify-center sm:justify-start">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400"></div>
+                  <div className="w-3 h-3 bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500"></div>
                   <span>Removed/Modified lines</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400"></div>
+                  <div className="w-3 h-3 bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500"></div>
                   <span>Added/Fixed lines</span>
                 </div>
               </div>
@@ -255,13 +248,14 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex justify-end items-center pt-4 border-t gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end items-center pt-4 border-t gap-3">
+            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Close
             </Button>
             <Button 
               onClick={downloadFinalFile}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               <Download className="w-4 h-4 mr-2" />
               {isLoading ? 'Processing...' : 'Download Final File'}
