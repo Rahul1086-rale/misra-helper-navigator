@@ -173,11 +173,10 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
                 <Wrench className="w-8 h-8 mx-auto animate-pulse text-primary" />
                 <h3 className="text-lg font-semibold">Fixing Violations</h3>
                 <p className="text-sm text-muted-foreground">
-                  Processing {tempSelectedViolations.size} violations...
+                  Processing {Array.from(tempSelectedViolations).length} violations...
                 </p>
                 <div className="relative w-full h-2 bg-secondary rounded-full overflow-hidden">
-                  <div 
-                    className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300 ease-in-out"
+                  <div className="absolute top-0 left-0 h-full bg-primary rounded-full animate-[loading_2s_ease-in-out_infinite]"
                     style={{
                       width: `${Math.min(fixProgress, 100)}%`,
                       animation: fixProgress < 90 ? 'pulse 1.5s ease-in-out infinite' : 'none'

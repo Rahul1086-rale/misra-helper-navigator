@@ -133,7 +133,7 @@ class ApiClient {
   // Download endpoints
   async downloadFixedFile(projectId: string): Promise<Blob | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/download/fixed-file?projectId=${projectId}`);
+      const response = await fetch(`${this.baseUrl}/api/download/fixed-file?projectId=${projectId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
