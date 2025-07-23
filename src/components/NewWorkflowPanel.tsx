@@ -17,7 +17,7 @@ import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api';
 import { v4 as uuidv4 } from 'uuid';
-import ViolationsModal from './ViolationsModal';
+import ViolationsModalUpdated from './ViolationsModalUpdated';
 import FixViewModal from './FixViewModal';
 import ChatFeedbackModal from './ChatFeedbackModal';
 
@@ -53,14 +53,15 @@ export default function NewWorkflowPanel() {
       return;
     }
 
+    // Reset state for new session
+    dispatch({ type: 'RESET_STATE' });
+    
     setIsUploadingCpp(true);
     
     try {
-      // Generate project ID if not exists
-      const projectId = state.projectId || uuidv4();
-      if (!state.projectId) {
-        dispatch({ type: 'SET_PROJECT_ID', payload: projectId });
-      }
+      // Generate new project ID
+      const projectId = uuidv4();
+      dispatch({ type: 'SET_PROJECT_ID', payload: projectId });
 
       // Upload file
       const uploadResponse = await apiClient.uploadCppFile(file, projectId);
@@ -93,10 +94,10 @@ export default function NewWorkflowPanel() {
             dispatch({ type: 'ADD_MESSAGE', payload: message });
             dispatch({ type: 'SET_CURRENT_STEP', payload: 'chat' });
             
-            toast({ 
-              title: "Success", 
-              description: "C++ file uploaded, numbered, and chat session initialized" 
-            });
+          toast({ 
+            title: "Success", 
+            description: "File uploaded successfully" 
+          });
           } else {
             throw new Error(chatResponse.error || 'Failed to initialize chat');
           }
@@ -250,7 +251,7 @@ export default function NewWorkflowPanel() {
             </Button>
             {state.uploadedFile && (
               <div className="text-xs text-muted-foreground">
-                ✓ File uploaded, numbered, and chat initialized
+                ✓ File uploaded
               </div>
             )}
           </div>
@@ -289,40 +290,15 @@ export default function NewWorkflowPanel() {
       {/* Violations Section */}
       {state.violations.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              MISRA Violations
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                {state.violations.length} violations found
-              </div>
-              <Badge variant="outline">
-                {state.selectedViolations.length} selected
-              </Badge>
-            </div>
-
-            <div className="flex gap-2">
+          <CardContent className="pt-6">
+            <div className="text-center">
               <Button
                 onClick={() => setShowViolationsModal(true)}
-                variant="outline"
-                className="flex-1"
-              >
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                View & Select Violations
-              </Button>
-              
-              <Button
-                onClick={fixSelectedViolations}
                 variant="default"
-                className="flex-1"
-                disabled={state.selectedViolations.length === 0 || isFixingViolations}
+                className="w-full"
               >
-                <Wrench className="w-4 h-4 mr-2" />
-                {isFixingViolations ? 'Fixing...' : 'Fix Selected'}
+                <Eye className="w-4 h-4 mr-2" />
+                View and Select Violations
               </Button>
             </div>
           </CardContent>
@@ -356,37 +332,26 @@ export default function NewWorkflowPanel() {
         </Card>
       )}
 
-      {/* Reset Section */}
-      <Card>
-        <CardContent className="pt-6">
-          <Button 
-            onClick={() => dispatch({ type: 'RESET_STATE' })} 
-            variant="ghost" 
-            className="w-full"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Start New Session
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Floating Chat Button */}
+      {/* Top Right Menu */}
       {state.projectId && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed top-6 right-6 z-50">
           <Button
             onClick={() => setShowChatModal(true)}
-            size="lg"
-            className="rounded-full shadow-lg"
+            variant="outline"
+            size="sm"
+            className="shadow-lg"
           >
-            <MessageSquare className="w-5 h-5" />
+            <MessageSquare className="w-4 h-4" />
           </Button>
         </div>
       )}
 
       {/* Modals */}
-      <ViolationsModal 
+      <ViolationsModalUpdated 
         isOpen={showViolationsModal} 
-        onClose={() => setShowViolationsModal(false)} 
+        onClose={() => setShowViolationsModal(false)}
+        onFixComplete={() => setShowFixViewModal(true)}
       />
       
       <FixViewModal 

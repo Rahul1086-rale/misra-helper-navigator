@@ -125,34 +125,44 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   };
 
 
-  // Highlight differences between original and fixed code
+  // Highlight differences between original and fixed code using stored code snippets
   const highlightDifferences = (code: string, isOriginal: boolean) => {
     if (!originalCode || !fixedCode) return code;
     
-    const originalLines = originalCode.split('\n');
-    const fixedLines = fixedCode.split('\n');
     const codeLines = code.split('\n');
+    const modifiedLines = new Set<number>();
+    
+    // Use stored fixed snippets to identify exact changed lines
+    if (state.fixedSnippets && state.fixedSnippets.length > 0) {
+      state.selectedViolations.forEach(violation => {
+        // Mark the violation line and surrounding context as modified
+        const lineNum = violation.line - 1; // Convert to 0-based index
+        for (let i = Math.max(0, lineNum - 2); i <= Math.min(codeLines.length - 1, lineNum + 2); i++) {
+          modifiedLines.add(i);
+        }
+      });
+    } else {
+      // Fallback to line-by-line comparison
+      const originalLines = originalCode.split('\n');
+      const fixedLines = fixedCode.split('\n');
+      
+      codeLines.forEach((line, index) => {
+        const originalLine = originalLines[index] || '';
+        const fixedLine = fixedLines[index] || '';
+        if (originalLine !== fixedLine) {
+          modifiedLines.add(index);
+        }
+      });
+    }
     
     return codeLines.map((line, index) => {
-      const originalLine = originalLines[index] || '';
-      const fixedLine = fixedLines[index] || '';
-      
-      // Check if line is different
-      const isDifferent = originalLine !== fixedLine;
-      const isModified = isDifferent && originalLine && fixedLine;
-      const isAdded = !originalLine && fixedLine;
-      const isRemoved = originalLine && !fixedLine;
-
-      console.log(`[${index}] original:`, JSON.stringify(originalLine));
-      console.log(`[${index}] fixed:   `, JSON.stringify(fixedLine));
+      const isModified = modifiedLines.has(index);
       
       let className = '';
       if (isModified) {
-        className = isOriginal ? 'bg-red-50 border-l-2 border-l-red-400' : 'bg-green-50 border-l-2 border-l-green-400';
-      } else if (isAdded && !isOriginal) {
-        className = 'bg-green-50 border-l-2 border-l-green-400';
-      } else if (isRemoved && isOriginal) {
-        className = 'bg-red-50 border-l-2 border-l-red-400';
+        className = isOriginal 
+          ? 'bg-red-50 border-l-2 border-l-red-400 dark:bg-red-950/20 dark:border-l-red-500' 
+          : 'bg-green-50 border-l-2 border-l-green-400 dark:bg-green-950/20 dark:border-l-green-500';
       }
       
       return (
@@ -207,7 +217,7 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
           {/* View Options */}
           <Tabs defaultValue="diff" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="diff">Side-by-Side Diff</TabsTrigger>
+              <TabsTrigger value="diff">Diff</TabsTrigger>
               <TabsTrigger value="original">Original Code</TabsTrigger>
               <TabsTrigger value="fixed">Fixed Code</TabsTrigger>
             </TabsList>
@@ -245,31 +255,17 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
-              {state.selectedViolations.length} violations fixed
-            </div>
-            
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={loadCodeContent}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-              <Button 
-                onClick={downloadFinalFile}
-                disabled={isLoading}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isLoading ? 'Processing...' : 'Download Final File'}
-              </Button>
-            </div>
+          <div className="flex justify-end items-center pt-4 border-t gap-3">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button 
+              onClick={downloadFinalFile}
+              disabled={isLoading}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isLoading ? 'Processing...' : 'Download Final File'}
+            </Button>
           </div>
         </div>
       </DialogContent>
