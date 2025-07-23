@@ -173,18 +173,11 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
                 <Wrench className="w-8 h-8 mx-auto animate-pulse text-primary" />
                 <h3 className="text-lg font-semibold">Fixing Violations</h3>
                 <p className="text-sm text-muted-foreground">
-                  Processing {Array.from(tempSelectedViolations).length} violations...
+                  Processing {tempSelectedViolations.size} violations...
                 </p>
-                <div className="relative w-full h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="absolute top-0 left-0 h-full bg-primary rounded-full animate-[loading_2s_ease-in-out_infinite]"
-                    style={{
-                      width: `${Math.min(fixProgress, 100)}%`,
-                      animation: fixProgress < 90 ? 'pulse 1.5s ease-in-out infinite' : 'none'
-                    }}
-                  />
-                </div>
+                <Progress value={fixProgress} className="w-full" />
                 <p className="text-xs text-muted-foreground">
-                  Analyzing and fixing violations...
+                  {fixProgress}% complete
                 </p>
               </div>
             </div>
@@ -285,10 +278,9 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
           <Button variant="outline" onClick={onClose} disabled={isFixing}>
             Cancel
           </Button>
-          <Button
+          <Button 
             onClick={confirmAndFix}
             disabled={tempSelectedViolations.size === 0 || isFixing}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Wrench className="w-4 h-4 mr-2" />
             {isFixing ? 'Fixing...' : `Confirm and Fix (${tempSelectedViolations.size})`}
