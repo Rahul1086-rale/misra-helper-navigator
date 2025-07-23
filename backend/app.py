@@ -113,6 +113,7 @@ class DiffResponse(BaseModel):
     original: str
     fixed: str
     has_changes: bool
+    highlight: dict = {}
 
 # Initialize Vertex AI on startup
 @app.on_event("startup")
@@ -561,7 +562,7 @@ async def get_diff(project_id: str):
         )
         
         # Create diff data comparing original with fixed denumbered file
-        diff_data = create_diff_data(original_file, temp_fixed_denumbered_path)
+        diff_data = create_diff_data(original_file, temp_fixed_denumbered_path, fixed_snippets)
         
         # Store temp paths in session for potential cleanup
         session['temp_fixed_numbered'] = temp_fixed_numbered_path

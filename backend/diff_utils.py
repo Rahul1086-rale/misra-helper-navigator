@@ -2,7 +2,8 @@
 
 import os
 import tempfile
-from typing import Tuple, Optional
+import re
+from typing import Tuple, Optional, List
 from denumbering import remove_line_numbers
 from replace import merge_fixed_snippets_into_file
 
@@ -66,13 +67,14 @@ def get_file_content(file_path: str) -> Optional[str]:
         print(f"Error reading file {file_path}: {str(e)}")
         return None
 
-def create_diff_data(original_file_path: str, fixed_file_path: str) -> dict:
+def create_diff_data(original_file_path: str, fixed_file_path: str, fixed_snippets: dict = None) -> dict:
     """
     Create diff data structure for frontend consumption.
     
     Args:
         original_file_path: Path to original file
         fixed_file_path: Path to fixed file
+        fixed_snippets: Dictionary of fixed code snippets
         
     Returns:
         Dictionary containing diff data
@@ -80,11 +82,57 @@ def create_diff_data(original_file_path: str, fixed_file_path: str) -> dict:
     original_content = get_file_content(original_file_path)
     fixed_content = get_file_content(fixed_file_path)
     
+    # Extract line numbers to highlight if fixed_snippets provided
+    highlight_data = {}
+    if fixed_snippets:
+        try:
+            original_lines, fixed_lines = get_original_and_fixed_lines(fixed_snippets)
+            highlight_data = {
+                "original_lines": original_lines,
+                "fixed_lines": fixed_lines
+            }
+        except Exception as e:
+            print(f"Error extracting highlight lines: {str(e)}")
+            highlight_data = {"original_lines": [], "fixed_lines": []}
+    
     return {
         "original": original_content or "",
         "fixed": fixed_content or "",
-        "has_changes": original_content != fixed_content if original_content and fixed_content else False
+        "has_changes": original_content != fixed_content if original_content and fixed_content else False,
+        "highlight": highlight_data
     }
+
+def get_original_and_fixed_lines(json_data):
+    """
+    Extract original and fixed line numbers from JSON data.
+    
+    Args:
+        json_data: Dictionary mapping line keys to content
+        
+    Returns:
+        Tuple of (original_lines, fixed_lines) - lists of line numbers to highlight
+    """
+    original_lines = []
+    fixed_line_map = {}
+    inserted_count = 0
+
+    sorted_keys = sorted(json_data.keys(), key=lambda k: (int(re.match(r'\d+', k).group()), k))
+
+    for key in sorted_keys:
+        base_line = int(re.match(r'\d+', key).group())
+
+        if key.isdigit():
+            original_lines.append(base_line)
+
+        if re.search(r'[a-z]$', key):
+            inserted_count += 1
+            fixed_line_map[key] = base_line + inserted_count
+        else:
+            fixed_line_map[key] = base_line + inserted_count
+
+    # Return only the mapped line numbers
+    fixed_lines = sorted(set(fixed_line_map.values()))
+    return sorted(set(original_lines)), fixed_lines
 
 def cleanup_temp_files(*file_paths: str) -> None:
     """

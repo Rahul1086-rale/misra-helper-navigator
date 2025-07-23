@@ -178,7 +178,7 @@ class ApiClient {
   }
 
   // New diff endpoint
-  async getDiff(projectId: string): Promise<ApiResponse<{original: string, fixed: string, has_changes: boolean}>> {
+  async getDiff(projectId: string): Promise<ApiResponse<{original: string, fixed: string, has_changes: boolean, highlight: {original_lines: number[], fixed_lines: number[]}}>> {
     return this.request(`/diff/${projectId}`, {
       method: 'GET',
     });

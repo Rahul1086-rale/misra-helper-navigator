@@ -19,6 +19,7 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   const { toast } = useToast();
   const [originalCode, setOriginalCode] = useState<string>('');
   const [fixedCode, setFixedCode] = useState<string>('');
+  const [highlightData, setHighlightData] = useState<{original_lines: number[], fixed_lines: number[]} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const originalScrollRef = useRef<HTMLDivElement>(null);
   const fixedScrollRef = useRef<HTMLDivElement>(null);
@@ -41,6 +42,7 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
       if (diffResult.success && diffResult.data) {
         setOriginalCode(diffResult.data.original);
         setFixedCode(diffResult.data.fixed);
+        setHighlightData(diffResult.data.highlight || null);
       } else {
         throw new Error(diffResult.error || 'Failed to get diff data');
       }
@@ -125,33 +127,18 @@ export default function FixViewModal({ isOpen, onClose }: FixViewModalProps) {
   };
 
 
-  // Highlight differences between original and fixed code using stored code snippets
+  // Highlight differences between original and fixed code using backend line data
   const highlightDifferences = (code: string, isOriginal: boolean) => {
     if (!originalCode || !fixedCode) return code;
     
     const codeLines = code.split('\n');
     const modifiedLines = new Set<number>();
     
-    // Use stored fixed snippets to identify exact changed lines
-    if (state.fixedSnippets && state.fixedSnippets.length > 0) {
-      state.selectedViolations.forEach(violation => {
-        // Mark the violation line and surrounding context as modified
-        const lineNum = violation.line - 1; // Convert to 0-based index
-        for (let i = Math.max(0, lineNum - 2); i <= Math.min(codeLines.length - 1, lineNum + 2); i++) {
-          modifiedLines.add(i);
-        }
-      });
-    } else {
-      // Fallback to line-by-line comparison
-      const originalLines = originalCode.split('\n');
-      const fixedLines = fixedCode.split('\n');
-      
-      codeLines.forEach((line, index) => {
-        const originalLine = originalLines[index] || '';
-        const fixedLine = fixedLines[index] || '';
-        if (originalLine !== fixedLine) {
-          modifiedLines.add(index);
-        }
+    // Use backend-provided line numbers for precise highlighting
+    if (highlightData) {
+      const linesToHighlight = isOriginal ? highlightData.original_lines : highlightData.fixed_lines;
+      linesToHighlight.forEach(lineNum => {
+        modifiedLines.add(lineNum - 1); // Convert to 0-based index
       });
     }
     
