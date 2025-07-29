@@ -29,7 +29,7 @@ export default function LoginPage() {
           title: "Login successful",
           description: "Welcome to RT MISRA Copilot!",
         });
-        navigate('/chat');
+        navigate('/dashboard');
       } else {
         toast({
           title: "Login failed",
