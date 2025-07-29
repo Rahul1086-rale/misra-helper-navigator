@@ -162,14 +162,14 @@ export default function ViolationsModalUpdated({ isOpen, onClose, onFixComplete 
             <div className="bg-card p-6 rounded-lg shadow-lg border max-w-sm w-full">
               <div className="text-center space-y-4">
                 <Wrench className="w-8 h-8 mx-auto animate-pulse text-primary" />
-                <h3 className="text-lg font-semibold">Fixing Violations</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-lg font-semibold">Fixing {state.selectedViolations.length} Violations</h3>
+                {/* <p className="text-sm text-muted-foreground">
                   Processing {state.selectedViolations.length} violations...
-                </p>
+                </p> */}
                 <Progress indeterminate className="w-full" />
-                <p className="text-xs text-muted-foreground">
+                {/* <p className="text-xs text-muted-foreground">
                   Processing...
-                </p>
+                </p> */}
               </div>
             </div>
           </div>

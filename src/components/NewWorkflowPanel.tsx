@@ -138,7 +138,7 @@ export default function NewWorkflowPanel() {
     if (!state.projectId || !state.uploadedFile) {
       toast({
         title: "No project",
-        description: "Please upload a C++ file first",
+        description: "Please upload a Source file first",
         variant: "destructive",
       });
       return;
@@ -225,7 +225,7 @@ export default function NewWorkflowPanel() {
           {/* C++ File Upload */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">C++ Source File</span>
+              <span className="text-sm font-medium">Source File</span>
               {state.uploadedFile && (
                 <Badge variant="secondary" className="text-xs">
                   <FileText className="w-3 h-3 mr-1" />
@@ -247,7 +247,7 @@ export default function NewWorkflowPanel() {
               disabled={isUploadingCpp}
             >
               <Upload className="w-4 h-4 mr-2" />
-              {isUploadingCpp ? 'Processing...' : 'Upload C++ File'}
+              {isUploadingCpp ? 'Processing...' : 'Upload Source File'}
             </Button>
             {state.uploadedFile && (
               <div className="text-xs text-muted-foreground">

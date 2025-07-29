@@ -124,7 +124,7 @@ def send_misra_violations(chat: ChatSession, violations_text: str) -> str:
             **Output Instructions (Continuation):**
             Don't add `...` for non-fixed parts.
             Don't remove the lines between functions if any.
-            Give all changed/fixed lines in a single snippet for all violations.
+            Give all changed/fixed lines in a single snippet for all violations in cpp``` Snippet ``` format only.
             If there are too many fixed snippets to fit into a single response due to output token limits, provide a partial set. After each response, if more snippets are remaining, explicitly state: `--- CONTINUED ---` and wait for my 'next' command to provide the next batch. Do not provide any more output until I type 'next'.
             If you have provided all requested fixed snippets for this batch of violations, simply stop. Do NOT output `--- CONTINUED ---`.
 

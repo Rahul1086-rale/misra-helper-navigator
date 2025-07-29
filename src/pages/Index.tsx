@@ -25,7 +25,7 @@ export default function Index() {
             RT MISRA Copilot
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            AI-powered MISRA C++ violation fixing tool using AI LLM's. Upload your code, analyze violations, and get intelligent fixes automatically.
+            AI-powered MISRA violation fixing tool using AI LLM's. Upload your code, analyze violations, and get intelligent fixes automatically.
           </p>
           <Link to="/chat">
             <Button size="lg" className="text-lg px-8 py-3">
@@ -46,7 +46,7 @@ export default function Index() {
               <Shield className="h-10 w-10 text-primary mb-4" />
               <CardTitle>MISRA Compliance</CardTitle>
               <CardDescription>
-                Automatically detect and fix MISRA C++ violations using advanced AI analysis
+                Automatically detect and fix MISRA violations using advanced AI analysis
               </CardDescription>
             </CardHeader>
           </Card>
@@ -97,7 +97,7 @@ export default function Index() {
               </div>
               <h3 className="text-xl font-semibold">Upload Files</h3>
               <p className="text-muted-foreground">
-                Upload your C++ source file and Excel MISRA violation report
+                Upload your source file and Excel MISRA violation report
               </p>
             </div>
             <div className="space-y-4">
@@ -132,7 +132,7 @@ export default function Index() {
             <CardContent className="p-8">
               <h3 className="text-2xl font-bold mb-4">Ready to Fix Your MISRA Violations?</h3>
               <p className="text-muted-foreground mb-6">
-                Start using the AI-powered RT MISRA Copilot to make your C++ code compliant and safer.
+                Start using the AI-powered RT MISRA Copilot to make your code compliant and safer.
               </p>
               <Link to="/chat">
                 <Button size="lg">

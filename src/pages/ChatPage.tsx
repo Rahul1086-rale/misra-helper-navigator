@@ -19,7 +19,7 @@ export default function ChatPage() {
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-bold mb-4">RT MISRA Copilot</h1>
               <p className="text-muted-foreground">
-                Upload your C++ files and MISRA reports to automatically fix violations
+                Upload your Source files and MISRA reports to automatically fix violations
               </p>
             </div>
 

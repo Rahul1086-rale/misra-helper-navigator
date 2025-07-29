@@ -144,7 +144,7 @@ export default function FileUploadSection() {
         {/* C++ File Upload */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">C++ Source File</span>
+            <span className="text-sm font-medium">Source File</span>
             {state.uploadedFile && (
               <Badge variant="secondary" className="text-xs">
                 <FileText className="w-3 h-3 mr-1" />
