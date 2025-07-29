@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Shield, Zap, Code, Users, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import rtMisraLogo from "@/assets/rt-misra-logo.png";
 
 export default function Index() {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       
@@ -27,7 +29,7 @@ export default function Index() {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             AI-powered MISRA violation fixing tool using AI LLM's. Upload your code, analyze violations, and get intelligent fixes automatically.
           </p>
-          <Link to="/chat">
+          <Link to={isAuthenticated ? "/chat" : "/login"}>
             <Button size="lg" className="text-lg px-8 py-3">
               Start Fixing Code <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -134,7 +136,7 @@ export default function Index() {
               <p className="text-muted-foreground mb-6">
                 Start using the AI-powered RT MISRA Copilot to make your code compliant and safer.
               </p>
-              <Link to="/chat">
+              <Link to={isAuthenticated ? "/chat" : "/login"}>
                 <Button size="lg">
                   Launch RT MISRA Copilot <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
